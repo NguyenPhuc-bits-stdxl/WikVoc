@@ -1,0 +1,6 @@
+{
+  "name": "Cadence Vocab",
+  "description": "Adaptive, low-pressure English vocabulary micro-drill engineered with cognitive spacing and progressive cloze.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

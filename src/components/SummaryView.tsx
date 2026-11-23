@@ -50,7 +50,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       {/* Header & Action Buttons */}
       <div className="space-y-5">
         <div className="space-y-2 max-w-2xl">
-          <p className="text-xs font-mono text-cyan-600 dark:text-cyan-400">
+          <p className="text-xs font-mono wv-text-accent">
             Session Complete · {summary.formatBreakdown[QuestionFormat.MCQ]} MCQ ·{' '}
             {summary.formatBreakdown[QuestionFormat.COLUMNS]} Columns ·{' '}
             {summary.formatBreakdown[QuestionFormat.CLOZE]} Cloze
@@ -64,13 +64,13 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </h1>
         </div>
 
-        {/* 4 Zero-Friction Action Buttons */}
+        {/* Zero-Friction Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             disabled={summary.suggestedPlan.pairs.length < 2}
             onClick={() => onRestartBySuggestion(summary.suggestedPlan)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-cyan-600 hover:bg-cyan-500 text-white dark:bg-cyan-500 dark:hover:bg-cyan-400 dark:text-slate-950 transition-colors cursor-pointer disabled:opacity-40 whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold wv-btn-primary transition-colors cursor-pointer disabled:opacity-40 whitespace-nowrap"
           >
             <Sparkles className="w-4 h-4" />
             <span>Restart Drill by Suggestion</span>
@@ -80,9 +80,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             type="button"
             disabled={revengePairs.length < 2}
             onClick={() => onDrillWeakWords(revengePairs)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-cyan-600/40 dark:border-cyan-500/40 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/15 transition-colors cursor-pointer disabled:opacity-40 whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border wv-border-accent wv-bg-accent-soft text-slate-900 dark:text-slate-100 hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 whitespace-nowrap"
           >
-            <Flame className="w-4 h-4" />
+            <Flame className="w-4 h-4 wv-text-accent" />
             <span>Drill Weak Words Only ({revengePairs.length})</span>
           </button>
 
@@ -107,6 +107,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
         <p className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
           Suggested Drill: {summary.suggestedPlan.rationale}
+          {summary.suggestedPlan.below50Count > 0
+            ? ' · Covers 100% of words remaining under 50% mastery.'
+            : ''}
         </p>
       </div>
 

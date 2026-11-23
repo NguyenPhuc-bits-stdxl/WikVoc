@@ -1,5 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { Upload, FileText, Trash2, AlertCircle, Play, ArrowRight } from 'lucide-react';
+import {
+  Upload,
+  FileText,
+  Trash2,
+  AlertCircle,
+  Play,
+  ArrowRight,
+  BookmarkPlus,
+  Check,
+  Layers,
+  Brain,
+} from 'lucide-react';
 import {
   DelimiterOption,
   DifficultyMode,
@@ -15,12 +26,16 @@ interface DeckSetupViewProps {
   customDelimiter: string;
   parsedDeck: ParsedDeckResult;
   sessionConfig: SessionConfig;
+  activeDeckName: string | null;
   onChangeRawText: (text: string) => void;
   onChangeDelimiter: (option: DelimiterOption) => void;
   onChangeCustomDelimiter: (delim: string) => void;
   onLoadSampleDeck: () => void;
+  onSaveDeckToLibrary: (name: string) => Promise<void>;
   onUpdateSessionConfig: (next: SessionConfig) => void;
   onStartDrill: () => void;
+  onStartFlashcards: () => void;
+  onOpenModelInfo: () => void;
 }
 
 const DELIMITER_OPTIONS: { id: DelimiterOption; label: string }[] = [
@@ -38,17 +53,23 @@ export const DeckSetupView: React.FC<DeckSetupViewProps> = ({
   customDelimiter,
   parsedDeck,
   sessionConfig,
+  activeDeckName,
   onChangeRawText,
   onChangeDelimiter,
   onChangeCustomDelimiter,
   onLoadSampleDeck,
+  onSaveDeckToLibrary,
   onUpdateSessionConfig,
   onStartDrill,
+  onStartFlashcards,
+  onOpenModelInfo,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showSkipped, setShowSkipped] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [saveNameInput, setSaveNameInput] = useState('');
+  const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
   const validCount = parsedDeck.pairs.length;
   const minPromptCount = Math.max(2, validCount);
@@ -84,28 +105,38 @@ export const DeckSetupView: React.FC<DeckSetupViewProps> = ({
     if (file) void handleFile(file);
   };
 
+  const handleSaveCurrentDeck = async () => {
+    if (validCount < 2) return;
+    const chosenName =
+      saveNameInput.trim() || activeDeckName || `Deck (${validCount} words)`;
+    await onSaveDeckToLibrary(chosenName);
+    setSaveNameInput('');
+    setSavedNotice(`Saved "${chosenName}" to My Decks`);
+    window.setTimeout(() => setSavedNotice(null), 2600);
+  };
+
   return (
     <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <div className="mb-8 max-w-2xl">
         <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 text-balance">
           Fast-paced vocabulary drills calibrated to your focus
         </h1>
-        <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-          Paste two columns from Excel or Quizlet, or load a text file. Every prompt adapts in real time to your pace, hesitation, and recall strength without countdown anxiety.
+        <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+          Paste two columns from Excel or Quizlet, load a saved deck, or study with spaced repetition flashcards at your own pace.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Zone: Data Input & Live Preview */}
         <section className="lg:col-span-7 space-y-6">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 space-y-5">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 sm:p-6 space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="font-display text-base font-semibold text-slate-900 dark:text-slate-100">
                   Vocabulary Source
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Two columns per line: Term and Definition
+                  {activeDeckName ? `Editing: ${activeDeckName} · ` : ''}Two columns per line: Term and Definition
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -263,10 +294,40 @@ export const DeckSetupView: React.FC<DeckSetupViewProps> = ({
                 ))}
               </div>
             )}
+
+            {/* Quick Save to My Decks */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center gap-2.5">
+              <input
+                type="text"
+                value={saveNameInput}
+                onChange={(e) => setSaveNameInput(e.target.value)}
+                placeholder={activeDeckName || 'Deck name to save in My Decks...'}
+                disabled={validCount < 2}
+                className="flex-1 px-3 py-2 rounded-lg text-xs border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
+              />
+              <button
+                type="button"
+                disabled={validCount < 2}
+                onClick={() => void handleSaveCurrentDeck()}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-600 transition-colors disabled:opacity-40 cursor-pointer whitespace-nowrap"
+              >
+                {savedNotice ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{savedNotice}</span>
+                  </>
+                ) : (
+                  <>
+                    <BookmarkPlus className="w-3.5 h-3.5 wv-text-accent" />
+                    <span>Save to My Decks</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Live Preview Table */}
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm overflow-hidden">
             <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h3 className="font-display text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Parsed Preview
@@ -315,7 +376,7 @@ export const DeckSetupView: React.FC<DeckSetupViewProps> = ({
 
         {/* Right Zone: Drill Configuration */}
         <aside className="lg:col-span-5">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 space-y-6">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 sm:p-6 space-y-6">
             <div>
               <h2 className="font-display text-base font-semibold text-slate-900 dark:text-slate-100">
                 Session Pacing
@@ -583,23 +644,46 @@ export const DeckSetupView: React.FC<DeckSetupViewProps> = ({
               )}
             </div>
 
-            {/* Primary Start Action */}
-            <button
-              type="button"
-              disabled={!canStart}
-              onClick={onStartDrill}
-              className="w-full py-3 px-5 rounded-xl font-display text-sm font-semibold inline-flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white dark:bg-cyan-500 dark:hover:bg-cyan-400 dark:text-slate-950 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Start Adaptive Drill</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {/* Primary Actions: Adaptive Drill & Spaced Repetition Flashcards */}
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                disabled={!canStart}
+                onClick={onStartDrill}
+                className="w-full py-3 px-5 rounded-xl font-display text-sm font-semibold inline-flex items-center justify-center gap-2 wv-btn-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>Start Adaptive Drill</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                disabled={validCount < 1}
+                onClick={onStartFlashcards}
+                className="w-full py-2.5 px-5 rounded-xl font-display text-sm font-semibold inline-flex items-center justify-center gap-2 border wv-border-accent wv-bg-accent-soft text-slate-900 dark:text-slate-100 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Layers className="w-4 h-4 wv-text-accent" />
+                <span>Study with Flashcards (Spaced Repetition)</span>
+              </button>
+            </div>
 
             {validCount < 2 && (
               <p className="text-xs text-center text-amber-600 dark:text-amber-400">
-                Load or paste at least 2 valid pairs to begin.
+                Load or paste at least 2 valid pairs to start an Adaptive Drill.
               </p>
             )}
+
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={onOpenModelInfo}
+                className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+              >
+                <Brain className="w-3.5 h-3.5 wv-text-accent" />
+                <span>How Adaptive Model &amp; k-Vector Work</span>
+              </button>
+            </div>
           </div>
         </aside>
       </div>

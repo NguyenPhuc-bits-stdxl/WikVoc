@@ -246,6 +246,7 @@ export interface SuggestedDrillPlan {
   pairs: VocabPair[];
   targetCount: number;
   targetMinutes: number;
+  below50Count: number;
   rationale: string;
 }
 
@@ -262,3 +263,80 @@ export interface SessionSummaryData {
   previousConfig: SessionConfig;
   suggestedPlan: SuggestedDrillPlan;
 }
+
+export enum PaletteId {
+  CYAN = 'cyan',
+  EMERALD = 'emerald',
+  INDIGO = 'indigo',
+  AMBER = 'amber',
+  ROSE = 'rose',
+}
+
+export enum BackgroundMode {
+  NONE = 'none',
+  STATIC = 'static',
+  SLIDESHOW = 'slideshow',
+}
+
+export enum ScrimStrength {
+  LIGHT = 'light',
+  BALANCED = 'balanced',
+  DEEP = 'deep',
+}
+
+export interface SavedWallpaperItem {
+  id: string;
+  name: string;
+  src: string;
+  isBuiltin: boolean;
+  createdAt: number;
+}
+
+export interface AppearanceConfig {
+  isDark: boolean;
+  palette: PaletteId;
+  bgMode: BackgroundMode;
+  staticWallpaperId: string;
+  slideshowWallpaperIds: string[];
+  slideshowIntervalSec: number;
+  scrimStrength: ScrimStrength;
+}
+
+export interface SavedDeckRecord {
+  id: string;
+  name: string;
+  rawText: string;
+  delimiterOption: DelimiterOption;
+  customDelimiter: string;
+  pairCount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export enum FlashcardRating {
+  AGAIN = 'again',
+  HARD = 'hard',
+  GOOD = 'good',
+  EASY = 'easy',
+}
+
+export enum FlashcardCardStatus {
+  NEW = 'new',
+  LEARNING = 'learning',
+  REVIEW = 'review',
+  RELEARNING = 'relearning',
+}
+
+export interface FlashcardState {
+  id: string;
+  term: string;
+  def: string;
+  status: FlashcardCardStatus;
+  reps: number;
+  lapses: number;
+  easeFactor: number;
+  intervalDays: number;
+  dueAt: number;
+  lastReviewedAt: number | null;
+}
+

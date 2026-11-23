@@ -1,6 +1,7 @@
 import { KeyMapConfig } from '@/src/types/vocab';
 
-const KEYMAP_STORAGE_KEY = 'cadence_vocab_keymap_v1';
+const KEYMAP_STORAGE_KEY = 'wikvoc_keymap_v1';
+const LEGACY_KEYMAP_STORAGE_KEY = 'cadence_vocab_keymap_v1';
 
 export const DEFAULT_KEYMAP: KeyMapConfig = {
   opt1: '1',
@@ -18,7 +19,9 @@ export const DEFAULT_KEYMAP: KeyMapConfig = {
 
 export function loadKeyMap(): KeyMapConfig {
   try {
-    const raw = window.localStorage.getItem(KEYMAP_STORAGE_KEY);
+    const raw =
+      window.localStorage.getItem(KEYMAP_STORAGE_KEY) ??
+      window.localStorage.getItem(LEGACY_KEYMAP_STORAGE_KEY);
     if (!raw) return { ...DEFAULT_KEYMAP };
     const parsed = JSON.parse(raw) as Partial<KeyMapConfig>;
     return {

@@ -150,7 +150,7 @@ export const DrillStage: React.FC<DrillStageProps> = ({
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-200">
-                <Clock className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                <Clock className="w-3.5 h-3.5 wv-text-accent" />
                 <span>
                   {formatDurationMinutesSeconds(elapsedMs)} / {sessionConfig.targetMinutes}:00
                 </span>
@@ -182,15 +182,15 @@ export const DrillStage: React.FC<DrillStageProps> = ({
         {/* Calm, low-pressure progress bar */}
         <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
           <div
-            className="h-full bg-cyan-600 dark:bg-cyan-400 transition-all duration-300 ease-out"
+            className="h-full wv-progress-fill transition-all duration-300 ease-out"
             style={{ width: `${Math.round(progressRatio * 100)}%` }}
           />
         </div>
 
         {timeExpired && (
-          <div className="px-3.5 py-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-xs text-cyan-700 dark:text-cyan-300 flex items-center justify-between gap-2">
+          <div className="px-3.5 py-2 rounded-lg border wv-border-accent wv-bg-accent-soft text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between gap-2">
             <span>Target time reached — finish this prompt cleanly at your own pace.</span>
-            <span className="font-mono">Final prompt</span>
+            <span className="font-mono wv-text-accent">Final prompt</span>
           </div>
         )}
       </div>

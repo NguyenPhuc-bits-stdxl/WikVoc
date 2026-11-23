@@ -1221,14 +1221,9 @@ export function buildSuggestedDrillPlan(
   const exposed = scored.filter((s) => s.item.exposures > 0 || s.item.guessMarksCount > 0);
   const pool = exposed.length >= 2 ? exposed : scored;
 
-  const flagged = pool.filter(
-    ({ item }) =>
-      item.errorCount > 0 ||
-      item.guessMarksCount > 0 ||
-      item.mastery < 0.6 ||
-      item.hesitationScore >= 0.45 ||
-      item.confusionWeight >= 0.3
-  );
+  const below50Items = scored
+    .filter(({ item }) => item.mastery < 0.5)
+    .map((s) => s.item);
 
   const prevCountCap = Math.max(
     2,
@@ -1238,15 +1233,35 @@ export function buildSuggestedDrillPlan(
   );
 
   const minWords = Math.min(2, items.length);
-  const maxSuggestedWords = Math.max(
-    minWords,
-    Math.min(prevCountCap, items.length, Math.ceil(items.length * 0.55))
-  );
+  let selectedItems: ItemState[];
 
-  const selectedItems =
-    flagged.length >= minWords
-      ? flagged.slice(0, maxSuggestedWords).map((s) => s.item)
-      : pool.slice(0, Math.min(maxSuggestedWords, Math.max(minWords, 4))).map((s) => s.item);
+  if (below50Items.length > 0) {
+    if (below50Items.length >= minWords) {
+      selectedItems = below50Items;
+    } else {
+      const fallbackSecond = scored.find((s) => s.item.id !== below50Items[0].id)?.item;
+      selectedItems = fallbackSecond ? [...below50Items, fallbackSecond] : below50Items;
+    }
+  } else {
+    const flagged = pool.filter(
+      ({ item }) =>
+        item.errorCount > 0 ||
+        item.guessMarksCount > 0 ||
+        item.mastery < 0.65 ||
+        item.hesitationScore >= 0.45 ||
+        item.confusionWeight >= 0.3
+    );
+
+    const maxSuggestedWords = Math.max(
+      minWords,
+      Math.min(prevCountCap, items.length, Math.ceil(items.length * 0.55))
+    );
+
+    selectedItems =
+      flagged.length >= minWords
+        ? flagged.slice(0, maxSuggestedWords).map((s) => s.item)
+        : pool.slice(0, Math.min(maxSuggestedWords, Math.max(minWords, 4))).map((s) => s.item);
+  }
 
   const pairs: VocabPair[] = selectedItems.map((it) => ({
     id: it.id,
@@ -1254,7 +1269,7 @@ export function buildSuggestedDrillPlan(
     def: it.def,
   }));
 
-  // Satisfy BOTH: >= pairs.length (full coverage) AND <= prevCountCap (never larger than prior drill)
+  // Satisfy full coverage (>= pairs.length) while honoring prior drill size cap when possible
   const desiredCount = Math.round(pairs.length * 1.5);
   const targetCount = Math.max(pairs.length, Math.min(prevCountCap, desiredCount));
 
@@ -1265,7 +1280,11 @@ export function buildSuggestedDrillPlan(
   const targetMinutes = clamp(scaledMinutes, 1, previousConfig.targetMinutes);
 
   const rationale =
-    previousConfig.mode === SessionMode.COUNT
+    below50Items.length > 0
+      ? previousConfig.mode === SessionMode.COUNT
+        ? `All ${below50Items.length} word${below50Items.length === 1 ? '' : 's'} under 50% mastery · ${targetCount} prompts`
+        : `All ${below50Items.length} word${below50Items.length === 1 ? '' : 's'} under 50% mastery · ${targetMinutes}m`
+      : previousConfig.mode === SessionMode.COUNT
       ? `${pairs.length} lowest-performing words · ${targetCount} prompts (≤ ${prevCountCap} prior)`
       : `${pairs.length} lowest-performing words · ${targetMinutes}m (≤ ${previousConfig.targetMinutes}m prior)`;
 
@@ -1273,6 +1292,7 @@ export function buildSuggestedDrillPlan(
     pairs,
     targetCount,
     targetMinutes,
+    below50Count: below50Items.length,
     rationale,
   };
 }
